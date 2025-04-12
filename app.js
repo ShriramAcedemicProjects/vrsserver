@@ -8,6 +8,7 @@ const vehicleRoutes = require("./routes/vehicleRoutes");
 const DriverRoutes = require("./routes/DriverRoutes");
 const TravelRoute = require("./routes/travelRouteRoutes");
 //const userRoutes = require("./routes/userRoutes");
+const BookingRoutes=require("./routes/BookingRoutes")
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use("/vehiclesAPI", vehicleRoutes);
 app.use("/DriversAPI",DriverRoutes)
 app.use("/TravelRoute",TravelRoute)
 //app.use("/api/users", userRoutes);
+app.use("/BookingAPI",BookingRoutes)
 
 app.use('/uploads', express.static('uploads'));
 

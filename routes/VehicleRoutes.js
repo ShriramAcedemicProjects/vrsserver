@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Vehicle = require("../models/VehicleModel");
 const VerifyToken = require("../middlewares/authMiddleware");
+const Booking =require("../models/BookingModel")
+const TravelRoute = require("../models/TravelRouteModel");
 
 // ✅ Add a new vehicle (Admin only)
 router.post("/VehicleAdd", VerifyToken, async (req, res) => {
@@ -88,6 +90,55 @@ router.get("/getCarList",VerifyToken, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch Car List" });
   }
 });
+
+
+// Route to fetch available vehicles based on source, destination, vehicleType, and travelDateTime
+router.get("/available", async (req, res) => {
+  try {
+    const { source, destination, vehicleType, travelDateTime } = req.query;
+
+    // Log the query parameters to check if they're being received correctly
+    console.log("Received Query Params:", req.query);
+
+    // Check if all required parameters are provided
+    if (!source || !destination || !vehicleType || !travelDateTime) {
+      return res.status(400).json({ message: "Missing required parameters" });
+    }
+
+    // 1. Find the matching route for the selected source and destination
+    const route = await TravelRoute.findOne({ source, destination }).populate(
+      vehicleType === "Car" ? "carIds" : "autoIds"
+    );
+    if (!route) {
+      return res.status(404).json({ message: "Route not found for the selected source and destination" });
+    }
+
+    // 2. Get the list of vehicles based on vehicle type (Car or Auto)
+    const vehicles = vehicleType === "Car" ? route.carIds : route.autoIds;
+
+    // 3. Get already booked vehicles for the selected travel date/time
+    const bookedVehicles = await Booking.find({
+      routeId: route._id,
+      travelDate: { $eq: new Date(travelDateTime) }, // Match the exact travel date
+      status: { $ne: "Cancelled" }, // Exclude cancelled bookings
+    }).distinct("vehicleId"); // Get distinct vehicleIds that are booked
+
+    // 4. Filter out the vehicles that are already booked
+    const availableVehicles = vehicles.filter(
+      (v) => !bookedVehicles.includes(v._id.toString()) && v.Active // Check if vehicle is not booked and is active
+    );
+
+    // 5. Return the available vehicles
+    res.status(200).json(availableVehicles);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+});
+
+
+
+
 
 
 
