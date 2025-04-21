@@ -7,6 +7,7 @@ const getClientIP = require("../utlity/getIP")
 const fs = require("fs");
 const path = require("path");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 // Configure Multer for File Uploads
 const storage = multer.diskStorage({
@@ -251,5 +252,51 @@ router.put("/generate-password/:id", VerifyToken, async (req, res) => {
   }
 });
 
+// Driver Login API
+router.post('/DriverLogin', async (req, res) => {
+  const { mobile, password } = req.body;
+
+  // Check input
+  if (!mobile || !password) {
+    return res.status(400).json({ code: 0, message: "Username and password are required." });
+  }
+
+  try {
+    // Find driver by username
+    const driver = await Driver.findOne({ username:mobile, Active: true });
+
+    if (!driver) {
+      return res.json({ code: 0, message: "Invalid username or inactive account." });
+    }
+
+    // Compare password (if hashed)
+    const isMatch = await bcrypt.compare(password, driver.password);
+
+    if (!isMatch) {
+      return res.json({ code: 0, message: "Invalid password." });
+    }
+
+    // Create JWT Token
+    const token = jwt.sign({ id: driver._id, role: "Driver" }, process.env.KEYFORTOKEN, { expiresIn: '1d' });
+
+    // Success Response
+    res.json({
+      code: 1,
+      message: "Login successful",
+      token,
+      driver: {
+        id: driver._id,
+        name: driver.driverName,
+        username: driver.username,
+        mobile: driver.driverMobile,
+        vehicleId: driver.vehicleId,
+      },
+    });
+
+  } catch (error) {
+    console.error("Driver login error:", error.message);
+    res.json({ code: 0, message: "Server error" });
+  }
+});
 
 module.exports = router;

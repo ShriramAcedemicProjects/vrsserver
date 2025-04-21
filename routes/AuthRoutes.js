@@ -10,6 +10,7 @@ const router = express.Router();
 // User Registration
 router.post("/registerUser", async (req, res) => {
   try {
+    console.log(req.body)
     const { firstName, lastName, email, password, role,mobile } = req.body;
 
     const existingUser = await User.findOne({ email });
@@ -41,7 +42,7 @@ router.post("/loginUser", async (req, res) => {
     if (!user) return res.json({ code:0,message: "You are Not Reigistered User" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.json({code:0, message: "Invalid Credentials" });
+    if (!isMatch) return res.json({code:0, message: "Password is wrong!!!" });
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.KEYFORTOKEN, {
       expiresIn: "1d",

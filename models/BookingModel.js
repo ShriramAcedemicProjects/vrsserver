@@ -25,7 +25,7 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  travelDate: {
+  travelDateTime: {
     type: Date,
     required: true,
   },
@@ -38,11 +38,7 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  assignedDriver: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Driver",
-    default: null,
-  },
+ 
   paymentStatus: {
     type: String,
     enum: ["Pending", "Paid"],
